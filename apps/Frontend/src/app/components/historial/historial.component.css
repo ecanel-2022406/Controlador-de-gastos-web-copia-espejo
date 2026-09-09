@@ -1,0 +1,147 @@
+.seccion-ingresos-contenedor {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+.tarjeta-formulario-superior,
+.tarjeta-historial {
+    background: #ffffff;
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.tarjeta-formulario-superior h3,
+.tarjeta-historial h3 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    color: #2c3e50;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.form-linea {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.grupo-input {
+    flex: 1;
+}
+
+.grupo-input input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #dcdde1;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.grupo-input input:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+}
+
+.estado-inferior-tarjeta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #7f8c8d;
+}
+
+.punto-estado {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.punto-estado.verde {
+    background-color: #2ecc71;
+}
+
+.monto-parcial {
+    margin-left: auto;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.tabla-historial-wrapper {
+    overflow-x: auto;
+}
+
+.tabla-ingresos {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.tabla-ingresos th,
+.tabla-ingresos td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #ecf0f1;
+}
+
+.tabla-ingresos th {
+    background-color: #f1f2f6;
+    color: #2f3640;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tabla-ingresos tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.badge-tipo {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badge-ingreso {
+    background-color: #e8f8f5;
+    color: #27ae60;
+}
+
+.badge-gasto {
+    background-color: #fdebd0;
+    color: #e67e22;
+}
+
+.historial-ingreso {
+    color: #27ae60;
+    font-weight: 600;
+}
+
+.historial-gasto {
+    color: #c0392b;
+    font-weight: 600;
+}
+
+.no-hay-registros {
+    text-align: center;
+    padding: 40px;
+    color: #95a5a6;
+    font-size: 1rem;
+}
+
+.pie-ayuda {
+    text-align: center;
+    font-size: 0.85rem;
+    color: #95a5a6;
+    margin-top: 10px;
+}

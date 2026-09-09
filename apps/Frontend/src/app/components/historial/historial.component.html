@@ -1,0 +1,60 @@
+<div class="seccion-ingresos-contenedor">
+  <div class="tarjeta-formulario-superior">
+    <h3>Filtros de Búsqueda en el Historial</h3>
+    <div class="form-linea">
+      <div class="grupo-input">
+        <input type="text" [(ngModel)]="busquedaTexto" (input)="aplicarFiltrosHistorial()" placeholder="Buscar por descripción o tipo...">
+      </div>
+    </div>
+    
+    <div class="estado-inferior-tarjeta">
+      <span class="punto-estado verde"></span>
+      <span class="texto-estado">Registros históricos totales</span>
+      <span class="monto-parcial">{{ historialFiltrado.length }} elementos</span>
+    </div>
+  </div>
+
+  <div class="tarjeta-historial">
+    <h3>Registro Histórico Detallado</h3>
+    
+    <div *ngIf="historialFiltrado && historialFiltrado.length > 0; else sinHistorial" class="tabla-historial-wrapper">
+      <table class="tabla-ingresos">
+        <thead>
+          <tr>
+            <th># ID / Ref</th>
+            <th>Tipo</th>
+            <th>Descripción</th>
+            <th>Fecha</th>
+            <th>Monto</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of historialFiltrado; let i = index">
+            <td>#{{ item.id || (i + 1) }}</td>
+            <td>
+              <span class="badge-tipo" [ngClass]="item.tipoMovimiento === 'Ingreso' ? 'badge-ingreso' : 'badge-gasto'">
+                {{ item.tipoMovimiento }}
+              </span>
+            </td>
+            <td>{{ item.descripcion }}</td>
+            <td>{{ item.fecha || 'Fecha estándar' }}</td>
+            <td [ngClass]="item.claseMonto">
+              {{ item.tipoMovimiento === 'Ingreso' ? '+' : '-' }} Q {{ item.montoValor | number:'1.2-2' }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <ng-template #sinHistorial>
+      <div class="no-hay-registros">
+        <p>No hay registros disponibles en el historial</p>
+      </div>
+    </ng-template>
+  </div>
+
+  <div class="pie-ayuda">
+    <span>Historial completo sincronizado con el almacenamiento local</span>
+  </div>
+
+</div>

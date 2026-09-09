@@ -4,11 +4,14 @@ import { Router } from '@angular/router';
 import { IngresosService } from '../../services/ingresos.service';
 import { IngresosComponent } from '../ingresos/ingresos.component';
 import { GastosComponent } from '../gastos/gastos.component';
+import { TransaccionesComponent } from '../transacciones/transacciones.component'; 
+import { HistorialComponent } from '../historial/historial.component';
+
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, IngresosComponent, GastosComponent], // <-- Asegúrate de incluirlo aquí
+  imports: [CommonModule, IngresosComponent, GastosComponent, TransaccionesComponent, HistorialComponent], 
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })

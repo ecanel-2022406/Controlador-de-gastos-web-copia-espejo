@@ -5,19 +5,19 @@
       <button class="opcion-menu" [class.activo]="menuActivo === 'inicio'" (click)="seleccionarMenu('inicio')">
         <img src="images/inicio.png" alt="Icono Inicio" class="icono-menu-img"> Inicio
       </button>
- 
+
       <button class="opcion-menu" [class.activo]="menuActivo === 'ingresos'" (click)="seleccionarMenu('ingresos')">
         <img src="images/ingresos.png" alt="Icono Ingresos" class="icono-menu-img"> Ingresos
       </button>
- 
+
       <button class="opcion-menu" [class.activo]="menuActivo === 'gastos'" (click)="seleccionarMenu('gastos')">
         <img src="images/gastos.png" alt="Icono Gastos" class="icono-menu-img"> Gastos
       </button>
- 
+
       <button class="opcion-menu" [class.activo]="menuActivo === 'transacciones'" (click)="seleccionarMenu('transacciones')">
         <img src="images/transacciones.png" alt="Icono Transacciones" class="icono-menu-img"> Transacciones
       </button>
- 
+
       <button class="opcion-menu" [class.activo]="menuActivo === 'historial'" (click)="seleccionarMenu('historial')">
         <img src="images/historial.png" alt="Icono Historial" class="icono-menu-img"> Historial
       </button>
@@ -193,11 +193,15 @@
     </div>
 
     <div *ngIf="menuActivo === 'transacciones'">
-      <!-- Agrega tu componente o contenido de transacciones aquí cuando lo tengas -->
+      <app-transacciones></app-transacciones>
     </div>
 
     <div *ngIf="menuActivo === 'historial'">
-      <!-- Agrega tu componente o contenido de historial aquí cuando lo tengas -->
+      <app-historial></app-historial>
+    </div>
+
+    <div *ngIf="menuActivo === 'historial'">
+
     </div>
 
   </main>
