@@ -188,5 +188,17 @@
       <app-ingresos></app-ingresos>
     </div>
 
+    <div *ngIf="menuActivo === 'gastos'">
+      <app-gastos></app-gastos>
+    </div>
+
+    <div *ngIf="menuActivo === 'transacciones'">
+      <!-- Agrega tu componente o contenido de transacciones aquí cuando lo tengas -->
+    </div>
+
+    <div *ngIf="menuActivo === 'historial'">
+      <!-- Agrega tu componente o contenido de historial aquí cuando lo tengas -->
+    </div>
+
   </main>
 </div>

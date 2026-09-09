@@ -29,27 +29,13 @@
   min-width: 200px;
 }
 
-.grupo-input input {
+.grupo-input input, .select-filtro {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   font-size: 14px;
-}
-
-.btn-accion-principal {
-  background-color: #1e3a8a;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.btn-accion-principal:hover {
-  background-color: #1e40af;
+  background-color: #fff;
 }
 
 .estado-inferior-tarjeta {
@@ -66,8 +52,11 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: #22c55e;
   margin-right: 8px;
+}
+
+.punto-estado.azul {
+  background-color: #2563eb;
 }
 
 .monto-parcial {
@@ -107,9 +96,31 @@
   font-weight: 500;
 }
 
-.texto-monto {
+.badge-tipo {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
   font-weight: 600;
-  color: #0f172a;
+}
+
+.badge-ingreso {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.badge-gasto {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.monto-ingreso {
+  font-weight: 600;
+  color: #16a34a;
+}
+
+.monto-gasto {
+  font-weight: 600;
+  color: #dc2626;
 }
 
 .no-hay-registros {
@@ -127,7 +138,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-left: 4px solid #1e3a8a;
+  border-left: 4px solid #2563eb;
 }
 
 .titulo-total {
@@ -140,8 +151,15 @@
 .monto-total {
   font-size: 28px;
   font-weight: 700;
-  color: #0f172a;
   margin: 5px 0;
+}
+
+.texto-positivo {
+  color: #16a34a;
+}
+
+.texto-negativo {
+  color: #dc2626;
 }
 
 .sub-total {
@@ -160,18 +178,4 @@
   margin-top: 15px;
   font-size: 12px;
   color: #94a3b8;
-}
-
-.btn-tabla-eliminar {
-  background-color: #fee2e2;
-  color: #b91c1c;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.btn-tabla-eliminar:hover {
-  background-color: #fecaca;
 }

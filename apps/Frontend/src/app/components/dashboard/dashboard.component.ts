@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { IngresosService } from '../../services/ingresos.service';
 import { IngresosComponent } from '../ingresos/ingresos.component';
+import { GastosComponent } from '../gastos/gastos.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, IngresosComponent],
+  imports: [CommonModule, IngresosComponent, GastosComponent], // <-- Asegúrate de incluirlo aquí
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
@@ -41,6 +42,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenUrl = urlParams.get('token');
+    if (tokenUrl) {
+      localStorage.setItem('token', tokenUrl);
+      
+      try {
+        const partes = tokenUrl.split('.');
+        const base64 = partes[1].replace(/-/g, '+').replace(/_/g, '/');
+        const payload = JSON.parse(window.atob(base64));
+        if (payload.email) {
+          const nombreGoogle = payload.email.split('@')[0];
+          localStorage.setItem('nombreUsuario', nombreGoogle);
+        }
+      } catch (e) {
+        localStorage.setItem('nombreUsuario', 'Usuario Google');
+      }
+
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     this.nombreUsuario = localStorage.getItem('nombreUsuario') || 'Usuario';
     this.verificarToken();
 
@@ -104,7 +125,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
       const partes = token.split('.');
       if (partes.length !== 3) throw new Error('Token inválido');
 
-      const payload: any = JSON.parse(atob(partes[1]));
+      const base64 = partes[1].replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+
+      const payload: any = JSON.parse(jsonPayload);
       const expiracion = payload.exp * 1000;
 
       if (Date.now() >= expiracion) {
@@ -117,7 +146,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.router.navigate(['/login']);
     }
   }
-
+  
   toggleSidebar(): void {
     this.sidebarAbierto = !this.sidebarAbierto;
   }

@@ -1,0 +1,77 @@
+<div class="seccion-ingresos-contenedor">
+
+  <!-- Tarjeta superior de registro -->
+  <div class="tarjeta-formulario-superior">
+    <h3>Registre su gasto</h3>
+    <form class="form-linea" (submit)="agregarGasto(); $event.preventDefault()">
+      <div class="grupo-input">
+        <input type="text" [(ngModel)]="nuevoGasto.concepto" name="concepto" placeholder="Concepto (Ej. Supermercado)" required>
+      </div>
+      <div class="grupo-input monto-input-con-símbolo">
+        <span class="simbolo-q">Q</span>
+        <input type="number" [(ngModel)]="nuevoGasto.monto" name="monto" placeholder="Monto" step="0.01" required>
+      </div>
+      <div class="grupo-input">
+        <input type="text" [(ngModel)]="nuevoGasto.fecha" name="fecha" placeholder="Fecha (Ej: 22 Ago)">
+      </div>
+      <button type="submit" class="btn-accion-principal">Añadir Gasto</button>
+    </form>
+    
+    <div class="estado-inferior-tarjeta">
+      <span class="punto-estado verde"></span>
+      <span class="texto-estado">{{ listaGastos.length > 0 ? 'Registros activos' : 'Sin registros' }}</span>
+      <span class="monto-parcial">Q {{ totalGastosAcumulado | number:'1.2-2' }}</span>
+    </div>
+  </div>
+
+  <!-- Historial Simplificado -->
+  <div class="tarjeta-historial">
+    <h3>Historial Simplificado de Gastos</h3>
+    
+    <div *ngIf="listaGastos && listaGastos.length > 0; else sinRegistros" class="tabla-historial-wrapper">
+      <table class="tabla-ingresos">
+        <thead>
+          <tr>
+            <th>Concepto / Categoría</th>
+            <th>Fecha</th>
+            <th>Monto</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of listaGastos; let i = index">
+            <td>{{ item.categoria || item.nombre }}</td>
+            <td>{{ item.fecha || 'N/A' }}</td>
+            <td class="texto-monto">Q {{ item.monto | number:'1.2-2' }}</td>
+            <td>
+              <button class="btn-tabla-eliminar" (click)="eliminarGasto(i)">Eliminar</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <ng-template #sinRegistros>
+      <div class="no-hay-registros">
+        <p>No hay registros disponibles</p>
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- Total General Acumulado -->
+  <div class="tarjeta-total-general">
+    <div class="info-total">
+      <span class="titulo-total">TOTAL GENERAL ACUMULADO DE TODOS LOS MESES</span>
+      <h2 class="monto-total">Q {{ totalGastosAcumulado | number:'1.2-2' }}</h2>
+      <span class="sub-total">Suma de todos los registros listados</span>
+    </div>
+    <div class="icono-total-container">
+      <img src="images/billetera.png" alt="Total" class="imagen-icono-total">
+    </div>
+  </div>
+
+  <div class="pie-ayuda">
+    <span>Mostrando todas las entradas registradas</span>
+  </div>
+
+</div>

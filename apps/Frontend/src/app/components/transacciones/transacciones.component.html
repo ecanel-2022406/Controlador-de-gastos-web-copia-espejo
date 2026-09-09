@@ -1,0 +1,82 @@
+<div class="seccion-ingresos-contenedor">
+
+  <!-- Tarjeta superior de filtros y resumen rápido -->
+  <div class="tarjeta-formulario-superior">
+    <h3>Filtrar Transacciones</h3>
+    <div class="form-linea">
+      <div class="grupo-input">
+        <input type="text" [(ngModel)]="busquedaConcepto" (input)="aplicarFiltros()" placeholder="Buscar por concepto...">
+      </div>
+      <div class="grupo-input">
+        <select [(ngModel)]="filtroTipo" (change)="aplicarFiltros()" class="select-filtro">
+          <option value="todos">Todas las transacciones</option>
+          <option value="ingreso">Solo Ingresos</option>
+          <option value="gasto">Solo Gastos</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="estado-inferior-tarjeta">
+      <span class="punto-estado azul"></span>
+      <span class="texto-estado">Mostrando registros consolidados</span>
+      <span class="monto-parcial">Total en lista: {{ transaccionesFiltradas.length }}</span>
+    </div>
+  </div>
+
+  <!-- Tabla de Historial General de Transacciones -->
+  <div class="tarjeta-historial">
+    <h3>Historial Global de Movimientos</h3>
+    
+    <div *ngIf="transaccionesFiltradas && transaccionesFiltradas.length > 0; else sinRegistros" class="tabla-historial-wrapper">
+      <table class="tabla-ingresos">
+        <thead>
+          <tr>
+            <th>Tipo</th>
+            <th>Concepto / Categoría</th>
+            <th>Fecha</th>
+            <th>Monto</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of transaccionesFiltradas">
+            <td>
+              <span class="badge-tipo" [ngClass]="item.tipo === 'Ingreso' ? 'badge-ingreso' : 'badge-gasto'">
+                {{ item.tipo }}
+              </span>
+            </td>
+            <td>{{ item.conceptoFinal }}</td>
+            <td>{{ item.fecha || 'N/A' }}</td>
+            <td [ngClass]="item.claseCss">
+              {{ item.tipo === 'Ingreso' ? '+' : '-' }} Q {{ item.montoNum | number:'1.2-2' }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <ng-template #sinRegistros>
+      <div class="no-hay-registros">
+        <p>No hay transacciones registradas con estos filtros</p>
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- Tarjeta de Balance General (Ingresos vs Gastos) -->
+  <div class="tarjeta-total-general">
+    <div class="info-total">
+      <span class="titulo-total">BALANCE NETO ACTUAL (INGRESOS - GASTOS)</span>
+      <h2 class="monto-total" [ngClass]="balanceNeto >= 0 ? 'texto-positivo' : 'texto-negativo'">
+        Q {{ balanceNeto | number:'1.2-2' }}
+      </h2>
+      <span class="sub-total">Ingresos: Q {{ totalIngresosFlujo | number:'1.2-2' }} | Gastos: Q {{ totalGastosFlujo | number:'1.2-2' }}</span>
+    </div>
+    <div class="icono-total-container">
+      <img src="images/billetera.png" alt="Balance" class="imagen-icono-total">
+    </div>
+  </div>
+
+  <div class="pie-ayuda">
+    <span>Historial sincronizado en tiempo real</span>
+  </div>
+
+</div>

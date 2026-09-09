@@ -26,8 +26,13 @@
 
     <button type="submit">{{ esRegistro ? 'Registrarse' : 'Entrar' }}</button>
     
+    <button (click)="loginWithGoogle()" class="google-btn">
+        Iniciar sesión con Google
+    </button>
+
     <p class="toggle-mode" (click)="esRegistro = !esRegistro">
         {{ esRegistro ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate' }}
     </p>
+
     </form>
 </div>
