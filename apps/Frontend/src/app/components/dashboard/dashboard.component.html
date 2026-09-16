@@ -39,7 +39,7 @@
     <header class="barra-superior">
       <div class="grupo-titulo">
         <button class="boton-menu" (click)="toggleSidebar()">
-          <img src="images/menu.png" alt="Icono Historial" class="icono-menu-img">
+          <img src="images/menu.png" alt="Icono Menu" class="icono-menu-img">
           <span class="icono-hamburguesa"></span>
         </button>
         <div>
@@ -49,15 +49,33 @@
       </div>
       
       <div class="acciones-superiores">
+        <!-- Fecha original -->
         <div class="etiqueta-fecha">
-          <img src="images/fecha.png" alt="Calendario" class="imagen-icono-extra"> {{ fechaActual | date:'dd \'de\' MMMM, yyyy' }}
+          <img src="images/fecha.png" alt="Calendario" class="imagen-icono-extra"> 
+          <span>{{ fechaActual | date:'dd \'de\' MMMM, yyyy' }}</span>
         </div>
         
-        <div class="contenedor-notificacion">
-          <button class="boton-icono">
+        <!-- Campana y panel de recomendaciones flotante -->
+        <div class="contenedor-notificacion-flotante">
+          <button class="boton-icono" (click)="toggleNotificaciones()">
             <img src="images/notificacion.png" alt="Notificación" class="imagen-icono-extra">
-            <span class="punto-notificacion"></span>
+            <span class="punto-notificacion" *ngIf="listaNotificaciones.length > 0"></span>
           </button>
+
+          <div class="dropdown-recomendaciones" *ngIf="notificacionesAbiertas">
+            <div class="dropdown-header">
+              <h3>Centro de Recomendaciones</h3>
+            </div>
+            <div class="dropdown-body">
+              <div *ngIf="listaNotificaciones.length === 0" class="sin-notis">
+                No hay notificaciones nuevas.
+              </div>
+              <div class="item-notificacion" *ngFor="let alerta of listaNotificaciones">
+                <img src="images/notificacion.png" alt="Info" style="width: 14px; height: 14px; margin-top: 2px; opacity: 0.7;">
+                <p>{{ alerta }}</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="perfil-usuario">
@@ -78,12 +96,12 @@
           <div class="contenido-stat">
             <div class="titulo-icono-stat">
               <div class="circulo-icono azul-suave">
-                <img src="images/ingreso.png" alt="Icono Historial" class="icono-menu-img">
+                <img src="images/ingreso.png" alt="Icono Ingreso" class="icono-menu-img">
               </div>
-              <span>Ingreso fijo</span>
+              <span>Ingreso Fijo (Neto)</span>
             </div>
-            <h2>{{ ingresoFijo ? ('Q ' + (ingresoFijo | number:'1.2-2')) : 'Sin registros' }}</h2>
-            <p class="tendencia-positiva" *ngIf="ingresoFijo"><span class="flecha-tendencia"></span> Activo</p>
+            <h2>{{ ingresoFijoNeto ? ('Q ' + (ingresoFijoNeto | number:'1.2-2')) : 'Sin registros' }}</h2>
+            <p class="tendencia-positiva" *ngIf="ingresoFijoNeto"><span class="flecha-tendencia"></span> Con Leyes GT</p>
           </div>
         </div>
 
@@ -92,12 +110,16 @@
           <div class="contenido-stat">
             <div class="titulo-icono-stat">
               <div class="circulo-icono cian-suave">
-                <img src="images/extra.png" alt="Icono Historial" class="icono-menu-img">
+                <img src="images/extra.png" alt="Saldo" class="icono-menu-img">
               </div>
-              <span>Ingreso total</span>
+              <span>Saldo Disponible</span>
             </div>
-            <h2>{{ ingresoTotal !== null && ingresoTotal !== undefined && ingresoTotal !== 0 ? ('Q ' + (ingresoTotal | number:'1.2-2')) : 'Sin registros' }}</h2>
-            <p class="tendencia-positiva" *ngIf="ingresoTotal"><span class="flecha-tendencia"></span> Activo</p>
+            
+            <h2 style="color: #000;">
+              {{ ingresoNetoReal > 0 ? ('Q ' + (saldoDisponible | number:'1.2-2')) : 'Sin registros' }}
+            </h2>
+
+            <p class="tendencia-positiva"><span class="flecha-tendencia"></span> Restante</p>
           </div>
         </div>
 
@@ -148,6 +170,7 @@
           </ng-template>
         </div>
 
+        <!-- Sección de Próximos Pagos y Facturas alimentada por las transferencias -->
         <div class="tarjeta-panel pagos-panel">
           <div class="panel-header">
             <h3>Próximos Pagos y Facturas</h3>
@@ -159,18 +182,18 @@
               <div class="fila-pago" *ngFor="let pago of listaPagos">
                 <div class="pago-detalle-izq">
                   <div class="circulo-icono azul-suave">
-                    <img src="images/billetera.png" alt="Billetera" class="imagen-icono-extra">
+                    <img [src]="obtenerIconoMotivo(pago.motivo)" alt="Icono Motivo" class="imagen-icono-extra" style="width: 20px; height: 20px;">
                   </div>
                   <div>
-                    <strong>{{ pago.titulo || pago.nombre }}</strong>
-                    <small>{{ pago.fecha | date:'dd MMM, yyyy' }}</small>
+                    <strong>{{ pago.titulo }}</strong>
+                    <small>{{ pago.fecha | date:'dd MMM, yyyy' }} - <em>{{ pago.motivo }}</em></small>
                   </div>
                 </div>
-                <span class="item-monto">Q {{ pago.monto | number:'1.2-2' }}</span>
+                <span class="item-monto" style="color: #333;">Q {{ pago.monto | number:'1.2-2' }}</span>
               </div>
             </div>
             <div class="panel-footer simple">
-              <span>Mostrando pagos programados</span>
+              <span>Mostrando transferencias registradas</span>
             </div>
           </ng-container>
 
@@ -198,10 +221,6 @@
 
     <div *ngIf="menuActivo === 'historial'">
       <app-historial></app-historial>
-    </div>
-
-    <div *ngIf="menuActivo === 'historial'">
-
     </div>
 
   </main>

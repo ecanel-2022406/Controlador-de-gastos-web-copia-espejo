@@ -1,7 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IngresosService } from '../../services/ingresos.service';
+import { TransferenciaService, Transferencia } from '../../services/transferencia.service';
 
 @Component({
   selector: 'app-transacciones',
@@ -11,64 +11,112 @@ import { IngresosService } from '../../services/ingresos.service';
   styleUrls: ['./transacciones.component.css']
 })
 export class TransaccionesComponent implements OnInit {
-  todasLasTransacciones: any[] = [];
-  transaccionesFiltradas: any[] = [];
+  private transferenciaService = inject(TransferenciaService);
+
+  listaTransferencias: Transferencia[] = [];
+  transaccionesFiltradas: Transferencia[] = [];
   
-  filtroTipo: string = 'todos'; // 'todos', 'ingreso', 'gasto'
   busquedaConcepto: string = '';
+  ingresoTotal: number = 0;
+  totalGastosAcumulado: number = 0;
+  totalTransferenciasAcumulado: number = 0;
 
-  totalIngresosFlujo: number = 0;
-  totalGastosFlujo: number = 0;
-  balanceNeto: number = 0;
+  // Adaptado para que el HTML reconozca los campos del formulario
+  nuevaTransferencia = {
+    cuentaOrigen: 'Cuenta Principal',
+    cuentaDestino: '',
+    monto: null as number | null,
+    descripcion: '',
+    fecha: new Date().toISOString().split('T')[0]
+  };
 
-  constructor(private ingresosService: IngresosService) {}
+  mostrarModalAlerta: boolean = false;
+  mensajeAlerta: string = '';
 
   ngOnInit(): void {
-    // Nos suscribimos tanto a ingresos como a gastos para unificarlos
-    this.ingresosService.listaIngresos$.subscribe(ingresos => {
-      this.ingresosService.listaGastos$.subscribe(gastos => {
-        this.procesarTransacciones(ingresos || [], gastos || []);
-      });
+    this.cargarTransferencias();
+  }
+
+  cargarTransferencias(): void {
+    this.transferenciaService.obtenerTransferencias().subscribe({
+      next: (data) => {
+        this.listaTransferencias = data;
+        this.transaccionesFiltradas = data;
+        this.totalTransferenciasAcumulado = data.reduce((acc, item) => acc + (Number(item.monto) || 0), 0);
+      },
+      error: (err) => {
+        console.error('Error al cargar transferencias:', err);
+      }
     });
   }
 
-  procesarTransacciones(ingresos: any[], gastos: any[]): void {
-    // Mapeamos los ingresos con un tipo explícito
-    const listIngresos = ingresos.map(item => ({
-      ...item,
-      tipo: 'Ingreso',
-      montoNum: Number(item.monto) || 0,
-      conceptoFinal: item.concepto || item.categoria || 'Ingreso general',
-      claseCss: 'monto-ingreso'
-    }));
+  abrirModal(mensaje: string): void {
+    this.mensajeAlerta = mensaje;
+    this.mostrarModalAlerta = true;
+  }
 
-    // Mapeamos los gastos con un tipo explícito
-    const listGastos = gastos.map(item => ({
-      ...item,
-      tipo: 'Gasto',
-      montoNum: Number(item.monto) || 0,
-      conceptoFinal: item.categoria || item.concepto || 'Gasto general',
-      claseCss: 'monto-gasto'
-    }));
+  cerrarModal(): void {
+    this.mostrarModalAlerta = false;
+    this.mensajeAlerta = '';
+  }
 
-    // Combinamos y ordenamos por ID o fecha (simulando orden cronológico)
-    this.todasLasTransacciones = [...listIngresos, ...listGastos].sort((a, b) => b.id - a.id);
+  realizarTransferencia(): void {
+    if (!this.nuevaTransferencia.cuentaDestino || !this.nuevaTransferencia.monto || this.nuevaTransferencia.monto <= 0 || !this.nuevaTransferencia.descripcion) {
+      this.abrirModal('Por favor completa todos los campos (destino, monto y motivo).');
+      return;
+    }
+
+    const montoNuevo = Number(this.nuevaTransferencia.monto);
+
+    // Mapeamos los campos del formulario antiguo a la estructura que guarda PostgreSQL
+    const transferenciaObj: Transferencia = {
+      titulo: `${this.nuevaTransferencia.cuentaDestino} - ${this.nuevaTransferencia.descripcion}`,
+      monto: montoNuevo,
+      categoria: this.nuevaTransferencia.descripcion,
+      fecha: this.nuevaTransferencia.fecha,
+      origen: this.nuevaTransferencia.cuentaOrigen,
+      destino: this.nuevaTransferencia.cuentaDestino,
+      descripcion: this.nuevaTransferencia.descripcion
+    };
+
+    this.transferenciaService.crearTransferencia(transferenciaObj).subscribe({
+      next: () => {
+        this.cargarTransferencias();
+        this.nuevaTransferencia = {
+          cuentaOrigen: 'Cuenta Principal',
+          cuentaDestino: '',
+          monto: null,
+          descripcion: '',
+          fecha: new Date().toISOString().split('T')[0]
+        };
+      },
+      error: (err) => {
+        console.error('Error al guardar transferencia:', err);
+        this.abrirModal('No se pudo guardar la transferencia.');
+      }
+    });
+  }
+
+  eliminarTransferencia(id?: number): void {
+    if (!id) return;
     
-    this.aplicarFiltros();
-    this.calcularTotalesGlobales(listIngresos, listGastos);
+    this.transferenciaService.eliminarTransferencia(id).subscribe({
+      next: () => {
+        this.cargarTransferencias();
+      },
+      error: (err) => {
+        console.error('Error al eliminar transferencia:', err);
+      }
+    });
   }
 
   aplicarFiltros(): void {
-    this.transaccionesFiltradas = this.todasLasTransacciones.filter(t => {
-      const cumpleTipo = this.filtroTipo === 'todos' || t.tipo.toLowerCase() === this.filtroTipo.toLowerCase();
-      const cumpleBusqueda = !this.busquedaConcepto || t.conceptoFinal.toLowerCase().includes(this.busquedaConcepto.toLowerCase());
-      return cumpleTipo && cumpleBusqueda;
+    this.transaccionesFiltradas = this.listaTransferencias.filter(t => {
+      const destinoTxt = t.destino || t.titulo || '';
+      const descTxt = t.descripcion || t.categoria || '';
+      return !this.busquedaConcepto || 
+        destinoTxt.toLowerCase().includes(this.busquedaConcepto.toLowerCase()) || 
+        descTxt.toLowerCase().includes(this.busquedaConcepto.toLowerCase());
     });
-  }
-
-  calcularTotalesGlobales(ingresos: any[], gastos: any[]): void {
-    this.totalIngresosFlujo = ingresos.reduce((acc, item) => acc + (Number(item.monto) || 0), 0);
-    this.totalGastosFlujo = gastos.reduce((acc, item) => acc + (Number(item.monto) || 0), 0);
-    this.balanceNeto = this.totalIngresosFlujo - this.totalGastosFlujo;
   }
 }

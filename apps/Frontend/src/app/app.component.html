@@ -1,4 +1,14 @@
 <div style="text-align:center">
   <h1>¡Bienvenido a mi Controlador de Gastos!</h1>
 </div>
+
 <router-outlet></router-outlet>
+
+<div class="modal-inactividad-overlay" *ngIf="mostrarAlertaInactividad">
+  <div class="modal-inactividad-card">
+    <div class="icono-advertencia">⚠️</div>
+    <h2>¡Sesión Expirada!</h2>
+    <p>Has estado inactivo durante 5 minutos. Por tu seguridad, tu sesión ha finalizado.</p>
+    <div class="barra-progreso-cierre"></div>
+  </div>
+</div>

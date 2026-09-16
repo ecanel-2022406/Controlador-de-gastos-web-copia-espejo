@@ -1,71 +1,139 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { BehaviorSubject, combineLatest } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class IngresosService {
+  private http = inject(HttpClient);
+  private apiUrl = 'http://localhost:4000/api';
 
-  constructor() {}
+  private listaIngresosSubject = new BehaviorSubject<any[]>([]);
+  listaIngresos$ = this.listaIngresosSubject.asObservable();
 
-  private obtenerClaveUsuario(claveBase: string): string {
-    const usuarioActual = localStorage.getItem('nombreUsuario') || 'default';
-    return `${claveBase}_${usuarioActual.toLowerCase().trim()}`;
+  private listaGastosSubject = new BehaviorSubject<any[]>([]);
+  listaGastos$ = this.listaGastosSubject.asObservable();
+
+  private listaTransferenciasSubject = new BehaviorSubject<any[]>([]);
+  listaTransferencias$ = this.listaTransferenciasSubject.asObservable();
+
+  private ingresoFijoSubject = new BehaviorSubject<number>(0);
+  ingresoFijo$ = this.ingresoFijoSubject.asObservable();
+
+  historialUnificado$ = combineLatest([
+    this.listaIngresos$,
+    this.listaGastos$,
+    this.listaTransferencias$
+  ]);
+
+  constructor() {
+    // Ya no disparamos recargarDatosUsuario() a ciegas en el constructor.
+    // Dejamos que el Dashboard o el componente lo invoquen cuando ya hay sesión segura.
   }
 
-  private getIngresoFijoInicial(): number {
-    const clave = this.obtenerClaveUsuario('ingresoFijo');
-    return Number(localStorage.getItem(clave)) || 0;
+  private getHeaders(): HttpHeaders {
+    const token = localStorage.getItem('token') || '';
+    return new HttpHeaders().set('Authorization', `Bearer ${token}`);
   }
 
-  private ingresoFijoSource = new BehaviorSubject<number>(this.getIngresoFijoInicial());
-  ingresoFijo$ = this.ingresoFijoSource.asObservable();
+  // Sincroniza todos los datos desde PostgreSQL (Gastos, Ingresos, Transferencias)
+  recargarDatosUsuario(): void {
+    const token = localStorage.getItem('token');
+    if (!token) return; // Evita peticiones 401 si no hay token
 
-  guardarIngresoFijo(monto: number) {
-    const clave = this.obtenerClaveUsuario('ingresoFijo');
-    localStorage.setItem(clave, monto.toString());
-    this.ingresoFijoSource.next(monto);
+    const headers = this.getHeaders();
+
+    // 1. Obtener Gastos
+    this.http.get<any[]>(`${this.apiUrl}/gastos`, { headers }).subscribe({
+      next: (gastos) => this.listaGastosSubject.next(gastos),
+      error: (err) => console.error('Error al cargar gastos:', err)
+    });
+
+    // 2. Obtener Ingresos (Asegúrate de tener esta ruta /api/ingresos en tu backend)
+    this.http.get<any[]>(`${this.apiUrl}/ingresos`, { headers }).subscribe({
+      next: (ingresos) => this.listaIngresosSubject.next(ingresos),
+      error: (err) => console.error('Error al cargar ingresos:', err)
+    });
+
+    // 3. Obtener Transferencias (Asegúrate de tener esta ruta /api/transferencias en tu backend)
+    this.http.get<any[]>(`${this.apiUrl}/transferencias`, { headers }).subscribe({
+      next: (transferencias) => this.listaTransferenciasSubject.next(transferencias),
+      error: (err) => console.error('Error al cargar transferencias:', err)
+    });
   }
 
-  private getIngresosIniciales(): any[] {
-    const clave = this.obtenerClaveUsuario('listaIngresos');
-    return JSON.parse(localStorage.getItem(clave) || '[]');
+  obtenerSaldoDisponibleReal(): number {
+    const ingresos = this.listaIngresosSubject.getValue();
+    const gastos = this.listaGastosSubject.getValue();
+    const transferencias = this.listaTransferenciasSubject.getValue();
+
+    let granTotalNeto = 0;
+
+    ingresos.forEach(item => {
+      const monto = Number(item.monto) || 0;
+      const frecuencia = item.frecuencia || 'Único';
+
+      if (frecuencia !== 'Único') {
+        const igss = monto * 0.0483;
+        const isr = monto * 0.05;
+        let bonoDecreto = 0;
+
+        if (frecuencia === 'Mensual') bonoDecreto = 250.00;
+        else if (frecuencia === 'Quincenal') bonoDecreto = 125.00;
+        else if (frecuencia === 'Semanal') bonoDecreto = 62.50;
+
+        granTotalNeto += (monto - igss - isr + bonoDecreto);
+      } else {
+        granTotalNeto += monto;
+      }
+    });
+
+    const totalGastos = gastos.reduce((acc, item) => acc + (Number(item.monto) || 0), 0);
+    const totalTransferencias = transferencias.reduce((acc, item) => acc + (Number(item.monto) || 0), 0);
+
+    return granTotalNeto - totalGastos - totalTransferencias;
   }
 
-  private listaIngresosSource = new BehaviorSubject<any[]>(this.getIngresosIniciales());
-  listaIngresos$ = this.listaIngresosSource.asObservable();
+  // --- MÉTODOS CONECTADOS AL BACKEND ---
 
-  agregarIngreso(nuevoIngreso: any) {
-    const clave = this.obtenerClaveUsuario('listaIngresos');
-    const listaActual = this.listaIngresosSource.getValue();
-    const listaActualizada = [...listaActual, nuevoIngreso];
-    localStorage.setItem(clave, JSON.stringify(listaActualizada));
-    this.listaIngresosSource.next(listaActualizada);
-
-    if (nuevoIngreso.categoria === 'Salario Fijo' || nuevoIngreso.frecuencia !== 'Único') {
-      this.guardarIngresoFijo(nuevoIngreso.monto);
-    }
+  agregarGasto(nuevoGasto: { titulo: string; monto: number; categoria: string }): void {
+    const headers = this.getHeaders();
+    this.http.post(`${this.apiUrl}/gastos`, nuevoGasto, { headers }).subscribe({
+      next: () => this.recargarDatosUsuario(),
+      error: (err) => console.error('Error al guardar gasto:', err)
+    });
   }
 
-  private getGastosIniciales(): any[] {
-    const clave = this.obtenerClaveUsuario('listaGastos');
-    return JSON.parse(localStorage.getItem(clave) || '[]');
+  agregarIngreso(nuevoIngreso: any): void {
+    const headers = this.getHeaders();
+    this.http.post(`${this.apiUrl}/ingresos`, nuevoIngreso, { headers }).subscribe({
+      next: () => this.recargarDatosUsuario(),
+      error: (err) => console.error('Error al guardar ingreso:', err)
+    });
   }
 
-  private listaGastosSource = new BehaviorSubject<any[]>(this.getGastosIniciales());
-  listaGastos$ = this.listaGastosSource.asObservable();
-
-  agregarGasto(nuevoGasto: any) {
-    const clave = this.obtenerClaveUsuario('listaGastos');
-    const listaActual = this.listaGastosSource.getValue();
-    const listaActualizada = [...listaActual, nuevoGasto];
-    localStorage.setItem(clave, JSON.stringify(listaActualizada));
-    this.listaGastosSource.next(listaActualizada);
+  guardarTransferencia(nuevaTransaccion: any): void {
+    const headers = this.getHeaders();
+    this.http.post(`${this.apiUrl}/transferencias`, nuevaTransaccion, { headers }).subscribe({
+      next: () => this.recargarDatosUsuario(),
+      error: (err) => console.error('Error al guardar transferencia:', err)
+    });
   }
 
-  recargarDatosUsuario() {
-    this.ingresoFijoSource.next(this.getIngresoFijoInicial());
-    this.listaIngresosSource.next(this.getIngresosIniciales());
-    this.listaGastosSource.next(this.getGastosIniciales());
+  eliminarIngreso(id: number): void {
+    const headers = this.getHeaders();
+    this.http.delete(`${this.apiUrl}/ingresos/${id}`, { headers }).subscribe({
+      next: () => this.recargarDatosUsuario(),
+      error: (err) => console.error('Error al eliminar ingreso:', err)
+    });
+  }
+
+  eliminarTransferencia(id: number): void {
+    const headers = this.getHeaders();
+    this.http.delete(`${this.apiUrl}/transferencias/${id}`, { headers }).subscribe({
+      next: () => this.recargarDatosUsuario(),
+      error: (err) => console.error('Error al eliminar transferencia:', err)
+    });
   }
 }

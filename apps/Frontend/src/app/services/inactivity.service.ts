@@ -1,12 +1,16 @@
 import { Injectable, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class InactivityService {
   private timeoutId: any;
-  private readonly INACTIVITY_LIMIT = 5 * 60 * 1000; // 5 minutos de inactividad
+  private readonly INACTIVITY_LIMIT = 5* 60 * 1000;
+
+  private sesionExpiradaSubject = new BehaviorSubject<boolean>(false);
+  public sesionExpirada$ = this.sesionExpiradaSubject.asObservable();
 
   constructor(private router: Router, private ngZone: NgZone) {}
 
@@ -14,7 +18,6 @@ export class InactivityService {
     this.resetTimer();
 
     const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
-    
     events.forEach(event => {
       window.addEventListener(event, () => this.resetTimer());
     });
@@ -33,10 +36,16 @@ export class InactivityService {
   }
 
   private cerrarSesionPorInactividad() {
+
     localStorage.removeItem('token');
-    localStorage.removeItem('usuario');
-    alert('Tu sesión ha expirado por inactividad.');
-    this.router.navigate(['/login']);
+    localStorage.removeItem('nombreUsuario');
+
+    this.sesionExpiradaSubject.next(true);
+
+    setTimeout(() => {
+      this.sesionExpiradaSubject.next(false);
+      this.router.navigate(['/login']);
+    }, 3000);
   }
 
   public detenerMonitoreo() {

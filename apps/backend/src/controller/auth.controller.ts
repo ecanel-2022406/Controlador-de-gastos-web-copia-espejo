@@ -43,7 +43,7 @@ export const loginUsuario = async (req: Request, res: Response) => {
     const token = jwt.sign(
       { id: usuario.id, email: usuario.email }, 
       JWT_SECRET, 
-      { expiresIn: '10s' } 
+      { expiresIn: '8h' } 
     );
 
     return res.json({ 
@@ -53,5 +53,25 @@ export const loginUsuario = async (req: Request, res: Response) => {
     });
   } catch (error) {
     return res.status(500).json({ mensaje: 'Error en el login', error });
+  }
+};
+
+export const googleCallbackController = (req: Request, res: Response) => {
+  try {
+    const usuario = (req as any).user;
+
+    if (!usuario) {
+      return res.redirect('http://localhost:4200/login?error=NoAuth');
+    }
+
+    const token = jwt.sign(
+      { id: usuario.id, email: usuario.email }, 
+      JWT_SECRET, 
+      { expiresIn: '8h' }
+    );
+
+    res.redirect(`http://localhost:4200/auth-callback?token=${token}&nombre=${encodeURIComponent(usuario.nombre)}`);
+  } catch (error) {
+    res.redirect('http://localhost:4200/login?error=ServerError');
   }
 };

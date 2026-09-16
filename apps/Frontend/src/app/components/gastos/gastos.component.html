@@ -11,15 +11,18 @@
         <input type="number" [(ngModel)]="nuevoGasto.monto" name="monto" placeholder="Monto" step="0.01" required>
       </div>
       <div class="grupo-input">
-        <input type="text" [(ngModel)]="nuevoGasto.fecha" name="fecha" placeholder="Fecha (Ej: 22 Ago)">
+        <input type="date" [(ngModel)]="nuevoGasto.fecha" name="fecha" [min]="primerDiaMes" [max]="fechaActual" onkeydown="return false;" required>
       </div>
       <button type="submit" class="btn-accion-principal">Añadir Gasto</button>
     </form>
     
     <div class="estado-inferior-tarjeta">
       <span class="punto-estado verde"></span>
-      <span class="texto-estado">{{ listaGastos.length > 0 ? 'Registros activos' : 'Sin registros' }}</span>
-      <span class="monto-parcial">Q {{ totalGastosAcumulado | number:'1.2-2' }}</span>
+      <span class="texto-estado">
+        Disponible: Q {{ (ingresoTotal - totalGastosAcumulado) | number:'1.2-2' }} 
+        (Gastado: Q {{ totalGastosAcumulado | number:'1.2-2' }})
+      </span>
+      <span class="monto-parcial">Ingreso Total: Q {{ ingresoTotal | number:'1.2-2' }}</span>
     </div>
   </div>
 
@@ -71,4 +74,14 @@
     <span>Mostrando todas las entradas registradas</span>
   </div>
 
+</div>
+
+<!-- Modal Personalizado Centrado -->
+<div class="modal-overlay" *ngIf="mostrarAlertaModal">
+  <div class="modal-contenido">
+    <div class="modal-icono-alerta">⚠️</div>
+    <h3>Aviso Importante</h3>
+    <p>{{ mensajeAlerta }}</p>
+    <button type="button" class="btn-cerrar-modal" (click)="cerrarModal()">Cerrar</button>
+  </div>
 </div>

@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IngresosService } from '../../services/ingresos.service';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-historial',
@@ -10,50 +11,63 @@ import { IngresosService } from '../../services/ingresos.service';
     templateUrl: './historial.component.html',
     styleUrls: ['./historial.component.css']
 })
-export class HistorialComponent implements OnInit {
+export class HistorialComponent implements OnInit, OnDestroy {
     historialCompleto: any[] = [];
     historialFiltrado: any[] = [];
-
-    filtroMes: string = 'todos';
     busquedaTexto: string = '';
+
+    private subsHistorial?: Subscription;
 
     constructor(private ingresosService: IngresosService) {}
 
     ngOnInit(): void {
-        this.ingresosService.listaIngresos$.subscribe(ingresos => {
-        this.ingresosService.listaGastos$.subscribe(gastos => {
-            this.combinarHistorial(ingresos || [], gastos || []);
+        this.subsHistorial = this.ingresosService.historialUnificado$.subscribe(([ingresos, gastos, transferencias]) => {
+            this.combinarHistorial(ingresos || [], gastos || [], transferencias || []);
         });
-    });
     }
 
-    combinarHistorial(ingresos: any[], gastos: any[]): void {
-    const listIngresos = ingresos.map(item => ({
-        ...item,
-        tipoMovimiento: 'Ingreso',
-        montoValor: Number(item.monto) || 0,
-        descripcion: item.concepto || item.categoria || 'Ingreso registrado',
-        claseMonto: 'historial-ingreso'
-    }));
+    ngOnDestroy(): void {
+        if (this.subsHistorial) {
+            this.subsHistorial.unsubscribe();
+        }
+    }
 
-    const listGastos = gastos.map(item => ({
-        ...item,
-        tipoMovimiento: 'Gasto',
-        montoValor: Number(item.monto) || 0,
-        descripcion: item.categoria || item.concepto || 'Gasto registrado',
-        claseMonto: 'historial-gasto'
-    }));
+    combinarHistorial(ingresos: any[], gastos: any[], transferencias: any[]): void {
+        const listIngresos = ingresos.map(item => ({
+            ...item,
+            tipoMovimiento: 'Ingreso',
+            montoValor: Number(item.monto) || 0,
+            descripcion: item.concepto || item.descripcion || 'Ingreso registrado',
+            claseMonto: 'historial-ingreso'
+        }));
 
-        this.historialCompleto = [...listIngresos, ...listGastos].sort((a, b) => b.id - a.id);
+        const listGastos = gastos.map(item => ({
+            ...item,
+            tipoMovimiento: 'Gasto',
+            montoValor: Number(item.monto) || 0,
+            descripcion: item.categoria || item.descripcion || 'Gasto registrado',
+            claseMonto: 'historial-gasto'
+        }));
+
+        const listTransferencias = transferencias.map(item => ({
+            ...item,
+            tipoMovimiento: 'Transferencia',
+            montoValor: Number(item.monto) || 0,
+            descripcion: `Transferencia a ${item.destino || 'Cuenta externa'} - ${item.descripcion || ''}`,
+            claseMonto: 'historial-gasto' // Resta saldo igual que un gasto
+        }));
+
+        // Unimos y ordenamos por ID de forma descendente (más reciente primero)
+        this.historialCompleto = [...listIngresos, ...listGastos, ...listTransferencias].sort((a, b) => b.id - a.id);
         this.aplicarFiltrosHistorial();
     }
 
     aplicarFiltrosHistorial(): void {
-    this.historialFiltrado = this.historialCompleto.filter(item => {
-        const cumpleTexto = !this.busquedaTexto || 
-        item.descripcion.toLowerCase().includes(this.busquedaTexto.toLowerCase()) ||
-        item.tipoMovimiento.toLowerCase().includes(this.busquedaTexto.toLowerCase());
-        return cumpleTexto;
-    });
+        this.historialFiltrado = this.historialCompleto.filter(item => {
+            const cumpleTexto = !this.busquedaTexto || 
+                item.descripcion.toLowerCase().includes(this.busquedaTexto.toLowerCase()) ||
+                item.tipoMovimiento.toLowerCase().includes(this.busquedaTexto.toLowerCase());
+            return cumpleTexto;
+        });
     }
 }

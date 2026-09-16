@@ -8,27 +8,56 @@ datasource db {
 }
 
 model Usuario {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  nombre    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String          @id @default(uuid())
+  email          String          @unique
+  password       String
+  nombre         String
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
-  gastos    Gasto[]
+  gastos         Gasto[]
+  ingresos       Ingreso[]
+  transferencias Transferencia[] // <-- Esta línea faltaba en el modelo Usuario
 
   @@map("usuarios")
 }
 
 model Gasto {
-  id          Int      @id @default(autoincrement())
-  titulo      String   @db.VarChar(150)
-  monto       Decimal  @db.Decimal(10, 2)
-  categoria   String   @db.VarChar(100)
-  fecha       DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  titulo    String   @db.VarChar(150)
+  monto     Decimal  @db.Decimal(10, 2)
+  categoria String   @db.VarChar(100)
+  fecha     DateTime @default(now())
   
-  usuarioId   String
-  usuario     Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuarioId String
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   @@map("gastos")
+}
+
+model Ingreso {
+  id         Int      @id @default(autoincrement())
+  titulo     String
+  monto      Float
+  frecuencia String   @default("Único")
+  categoria  String   @default("General")
+  fecha      DateTime @default(now())
+  
+  usuarioId  String
+  usuario    Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@map("ingresos")
+}
+
+model Transferencia {
+  id         Int      @id @default(autoincrement())
+  titulo     String
+  monto      Float
+  categoria  String   @default("General")
+  fecha      DateTime @default(now())
+  
+  usuarioId  String
+  usuario    Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@map("transferencias")
 }

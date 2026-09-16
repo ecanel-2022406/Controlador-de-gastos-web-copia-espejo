@@ -7,7 +7,6 @@ import { GastosComponent } from '../gastos/gastos.component';
 import { TransaccionesComponent } from '../transacciones/transacciones.component'; 
 import { HistorialComponent } from '../historial/historial.component';
 
-
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -16,28 +15,30 @@ import { HistorialComponent } from '../historial/historial.component';
   styleUrls: ['./dashboard.component.css']
 })
 export class DashboardComponent implements OnInit, OnDestroy {
-
   fechaActual: Date = new Date();
   nombreUsuario: string = '';
 
   menuActivo: string = 'inicio';
   sidebarAbierto: boolean = true;
+  notificacionesAbiertas: boolean = false;
 
   ingresoFijo: number = 0;
   ingresoTotal: number = 0;
+  ingresoFijoNeto: number = 0;
+  ingresoNetoReal: number = 0;   
   gastosTotales: number = 0;
+  totalGastos: number = 0;
+  totalTransferencias: number = 0;
 
   listaPresupuesto: any[] = [];
   listaGastos: any[] = [];
   listaPagos: any[] = [];
 
-  totalPresupuestado: number = 0;
-  totalGastos: number = 0;
-
   private intervaloFecha: any;
-  private suscripcionDashboard?: any;
-  private suscripcionIngresoFijo?: any;
-  private suscripcionGastos?: any;
+  private subsIngresos?: any;
+  private subsGastos?: any;
+  private subsTransacciones?: any;
+  private subsFijo?: any;
 
   constructor(
     private router: Router,
@@ -45,38 +46,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    const urlParams = new URLSearchParams(window.location.search);
-    const tokenUrl = urlParams.get('token');
-    if (tokenUrl) {
-      localStorage.setItem('token', tokenUrl);
-      
-      try {
-        const partes = tokenUrl.split('.');
-        const base64 = partes[1].replace(/-/g, '+').replace(/_/g, '/');
-        const payload = JSON.parse(window.atob(base64));
-        if (payload.email) {
-          const nombreGoogle = payload.email.split('@')[0];
-          localStorage.setItem('nombreUsuario', nombreGoogle);
-        }
-      } catch (e) {
-        localStorage.setItem('nombreUsuario', 'Usuario Google');
-      }
-
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-
-    this.nombreUsuario = localStorage.getItem('nombreUsuario') || 'Usuario';
+    this.nombreUsuario = localStorage.getItem('nombreUsuario') || 'Edy';
     this.verificarToken();
-
     this.ingresosService.recargarDatosUsuario();
 
-    const usuarioKey = this.nombreUsuario.toLowerCase().trim();
-
-    const fijoGuardado = localStorage.getItem('ingresoFijo_' + usuarioKey);
-    if (fijoGuardado) {
-      this.ingresoFijo = Number(fijoGuardado);
-    } else {
-      this.ingresoFijo = 0; 
+    const usuarioKey = (localStorage.getItem('nombreUsuario') || 'usuario').toLowerCase().trim();
+    const gastosLocales = JSON.parse(localStorage.getItem('listaGastos_' + usuarioKey) || '[]');
+    if (gastosLocales.length > 0) {
+      this.listaGastos = gastosLocales;
+      const sumaLocales = gastosLocales.reduce((acc: number, item: any) => acc + (Number(item.monto) || 0), 0);
+      this.totalGastos = sumaLocales;
+      this.gastosTotales = sumaLocales + this.totalTransferencias;
     }
 
     this.intervaloFecha = setInterval(() => {
@@ -84,37 +64,100 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.verificarToken();
     }, 1000);
 
-    this.suscripcionIngresoFijo = this.ingresosService.ingresoFijo$.subscribe(monto => {
-      if (monto > 0) {
-        this.ingresoFijo = monto;
-        localStorage.setItem('ingresoFijo_' + usuarioKey, monto.toString());
+    this.subsIngresos = this.ingresosService.listaIngresos$.subscribe(lista => {
+      this.listaPresupuesto = lista;
+      this.ingresoTotal = lista.reduce((acc, item) => acc + (Number(item.monto) || 0), 0);
+      
+      let acumuladoFijoNeto = 0;
+      let granTotalNeto = 0;
+
+      lista.forEach(item => {
+        const monto = Number(item.monto) || 0;
+        const frecuencia = item.frecuencia || 'Único';
+
+        if (frecuencia !== 'Único') {
+          const igss = monto * 0.0483;
+          const isr = monto * 0.05;
+          let bonoDecreto = 0;
+
+          if (frecuencia === 'Mensual') bonoDecreto = 250.00;
+          else if (frecuencia === 'Quincenal') bonoDecreto = 125.00;
+          else if (frecuencia === 'Semanal') bonoDecreto = 62.50;
+
+          const montoFijoNetoItem = monto - igss - isr + bonoDecreto;
+
+          acumuladoFijoNeto = montoFijoNetoItem; 
+          granTotalNeto += montoFijoNetoItem;
+        } else {
+          granTotalNeto += monto;
+        }
+      });
+
+      this.ingresoFijoNeto = acumuladoFijoNeto;
+      this.ingresoNetoReal = granTotalNeto;
+    });
+
+    this.subsGastos = this.ingresosService.listaGastos$.subscribe(gastos => {
+      if (gastos && gastos.length > 0) {
+        this.listaGastos = gastos;
+        const gastosPuros = gastos.reduce((acc, item) => acc + (Number(item.monto) || 0), 0);
+        this.totalGastos = gastosPuros;
+        this.gastosTotales = gastosPuros + this.totalTransferencias;
       }
     });
 
-    this.suscripcionDashboard = this.ingresosService.listaIngresos$.subscribe(lista => {
-      this.listaPresupuesto = lista;
-      this.calcularTotalPresupuesto();
-    });
-
-    this.suscripcionGastos = this.ingresosService.listaGastos$.subscribe(gastos => {
-      this.listaGastos = gastos;
-      this.calcularTotalGastos();
+    this.subsTransacciones = this.ingresosService.listaTransferencias$.subscribe(transacciones => {
+      const sumaTransacciones = transacciones.reduce((acc, item) => acc + (Number(item.monto) || 0), 0);
+      this.totalTransferencias = sumaTransacciones;
+      
+      const gastosPuros = this.listaGastos.reduce((acc, item) => acc + (Number(item.monto) || 0), 0);
+      this.gastosTotales = gastosPuros + sumaTransacciones;
+      
+      this.listaPagos = transacciones.map(t => ({
+        titulo: t.destino ? `Transferencia a ${t.destino}` : (t.titulo || 'Pago programado'),
+        motivo: t.motivo || t.descripcion || 'General',
+        fecha: t.fecha || new Date(),
+        monto: Number(t.monto) || 0
+      }));
     });
   }
 
   ngOnDestroy(): void {
-    if (this.intervaloFecha) {
-      clearInterval(this.intervaloFecha);
+    if (this.intervaloFecha) clearInterval(this.intervaloFecha);
+    if (this.subsIngresos) this.subsIngresos.unsubscribe();
+    if (this.subsGastos) this.subsGastos.unsubscribe();
+    if (this.subsTransacciones) this.subsTransacciones.unsubscribe();
+    if (this.subsFijo) this.subsFijo.unsubscribe();
+  }
+
+  get saldoDisponible(): number {
+    return (this.ingresoNetoReal || 0) - (this.gastosTotales || 0);
+  }
+
+  toggleNotificaciones(): void {
+    this.notificacionesAbiertas = !this.notificacionesAbiertas;
+  }
+
+  get listaNotificaciones(): string[] {
+    const alertas: string[] = [];
+    
+    if (this.saldoDisponible < 0) {
+      alertas.push('¡Cuidado! Tus gastos superan tus ingresos totales. Estás en números rojos.');
+    } else if (this.saldoDisponible === 0 && this.ingresoNetoReal === 0) {
+      alertas.push('Bienvenido. Comienza registrando tus ingresos y gastos para ver recomendaciones.');
+    } else {
+      alertas.push('Tu balance general se encuentra saludable.');
     }
-    if (this.suscripcionDashboard) {
-      this.suscripcionDashboard.unsubscribe();
+
+    if (this.gastosTotales > (this.ingresoNetoReal * 0.5) && this.ingresoNetoReal > 0) {
+      alertas.push('Tus gastos actuales han superado el 50% de tus ingresos netos.');
     }
-    if (this.suscripcionIngresoFijo) {
-      this.suscripcionIngresoFijo.unsubscribe();
+
+    if (this.listaPresupuesto.length === 0) {
+      alertas.push('Recomendación: Agrega un ingreso fijo para calcular automáticamente las deducciones de ley en Guatemala (IGSS, ISR y Bono Decreto).');
     }
-    if (this.suscripcionGastos) {
-      this.suscripcionGastos.unsubscribe();
-    }
+
+    return alertas;
   }
 
   verificarToken(): void {
@@ -123,64 +166,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.router.navigate(['/login']);
       return;
     }
-
     try {
       const partes = token.split('.');
-      if (partes.length !== 3) throw new Error('Token inválido');
-
-      const base64 = partes[1].replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split('')
-          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join('')
-      );
-
-      const payload: any = JSON.parse(jsonPayload);
-      const expiracion = payload.exp * 1000;
-
-      if (Date.now() >= expiracion) {
-        alert('La sesión ha expirado');
-        this.limpiarSesionLocal();
-        this.router.navigate(['/login']);
+      if (partes.length !== 3) throw new Error();
+      const payload = JSON.parse(atob(partes[1].replace(/-/g, '+').replace(/_/g, '/')));
+      if (Date.now() >= payload.exp * 1000) {
+        this.cerrarSesion();
       }
-    } catch (error) {
-      this.limpiarSesionLocal();
-      this.router.navigate(['/login']);
+    } catch {
+      this.cerrarSesion();
     }
   }
-  
-  toggleSidebar(): void {
-    this.sidebarAbierto = !this.sidebarAbierto;
-  }
-
-  seleccionarMenu(opcion: string): void {
-    this.menuActivo = opcion;
-  }
-
-  cerrarSesion(): void {
-    this.limpiarSesionLocal();
-    this.router.navigate(['/login']);
-  }
-
-  private limpiarSesionLocal(): void {
-    localStorage.removeItem('token');
-    localStorage.removeItem('nombreUsuario');
-    localStorage.removeItem('emailUsuario');
-    sessionStorage.clear();
-  }
-
-  calcularTotalPresupuesto(): void {
-    if (this.listaPresupuesto?.length > 0) {
-      this.totalPresupuestado = this.listaPresupuesto.reduce(
-        (acc, item) => acc + (Number(item.monto) || 0),
-        0
-      );
-    } else {
-      this.totalPresupuestado = 0;
-    }
-    this.ingresoTotal = this.totalPresupuestado;
-  } 
 
   calcularTotalGastos(): void {
     if (this.listaGastos?.length > 0) {
@@ -191,8 +187,40 @@ export class DashboardComponent implements OnInit, OnDestroy {
     } else {
       this.totalGastos = 0;
     }
-    this.gastosTotales = this.totalGastos;
+    this.gastosTotales = this.totalGastos + this.totalTransferencias;
   }
 
-  cargarDatosReales(): void {}
+  toggleSidebar(): void {
+    this.sidebarAbierto = !this.sidebarAbierto;
+  }
+
+  seleccionarMenu(opcion: string): void {
+    this.menuActivo = opcion;
+  }
+
+  obtenerIconoMotivo(motivo: string): string {
+    if (!motivo) return 'images/billetera.png';
+    
+    const m = motivo.toLowerCase().trim();
+    
+    if (m.includes('educación') || m.includes('educacion')) {
+      return 'images/sombrero.png'; 
+    } else if (m.includes('deuda') || m.includes('deudas')) {
+      return 'images/tarjeta.png';
+    } else if (m.includes('ahorro')) {
+      return 'images/alcancia.png';
+    } else if (m.includes('servicio')) {
+      return 'images/factura.png';
+    } else if (m.includes('otros')) {
+      return 'images/otros.png';
+    }
+    
+    return 'images/billetera.png';
+  }
+
+  cerrarSesion(): void {
+    localStorage.clear();
+    sessionStorage.clear();
+    this.router.navigate(['/login']);
+  }
 }

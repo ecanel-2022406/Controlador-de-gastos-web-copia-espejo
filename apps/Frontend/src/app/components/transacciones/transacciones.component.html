@@ -1,82 +1,89 @@
 <div class="seccion-ingresos-contenedor">
-
-  <!-- Tarjeta superior de filtros y resumen rápido -->
   <div class="tarjeta-formulario-superior">
-    <h3>Filtrar Transacciones</h3>
+    <h3>Realizar Transferencia / Envío de Dinero</h3>
+    
     <div class="form-linea">
       <div class="grupo-input">
-        <input type="text" [(ngModel)]="busquedaConcepto" (input)="aplicarFiltros()" placeholder="Buscar por concepto...">
+        <input type="text" [(ngModel)]="nuevaTransferencia.cuentaDestino" placeholder="Destino (Ej. Cuenta de Ahorros / Tercero)">
       </div>
+
+      <div class="grupo-input monto-input-con-símbolo">
+        <span class="simbolo-q">Q</span>
+        <input type="number" [(ngModel)]="nuevaTransferencia.monto" placeholder="Monto a enviar">
+      </div>
+
+      <!-- Selector desplegable con opciones predefinidas -->
       <div class="grupo-input">
-        <select [(ngModel)]="filtroTipo" (change)="aplicarFiltros()" class="select-filtro">
-          <option value="todos">Todas las transacciones</option>
-          <option value="ingreso">Solo Ingresos</option>
-          <option value="gasto">Solo Gastos</option>
+        <select [(ngModel)]="nuevaTransferencia.descripcion" class="select-motivo">
+          <option value="" disabled selected>Selecciona un motivo...</option>
+          <option value="Educación">Educación</option>
+          <option value="Deudas">Deudas</option>
+          <option value="Ahorro">Ahorro</option>
+          <option value="Servicios">Servicios</option>
+          <option value="Otros">Otros</option>
         </select>
       </div>
+
+      <button class="btn-accion-principal" (click)="realizarTransferencia()">Transferir</button>
     </div>
-    
+
     <div class="estado-inferior-tarjeta">
-      <span class="punto-estado azul"></span>
-      <span class="texto-estado">Mostrando registros consolidados</span>
-      <span class="monto-parcial">Total en lista: {{ transaccionesFiltradas.length }}</span>
+      <span class="punto-estado verde"></span>
+      <span class="texto-estado">Sistema de transferencias locales activo</span>
+      <span class="monto-parcial">Total realizadas: {{ listaTransferencias.length }}</span>
     </div>
   </div>
 
-  <!-- Tabla de Historial General de Transacciones -->
+  <!-- Historial de transferencias -->
   <div class="tarjeta-historial">
-    <h3>Historial Global de Movimientos</h3>
+    <h3>Historial de Transferencias</h3>
     
-    <div *ngIf="transaccionesFiltradas && transaccionesFiltradas.length > 0; else sinRegistros" class="tabla-historial-wrapper">
+    <div class="form-linea" style="margin-bottom: 20px;">
+      <div class="grupo-input" style="width: 100%;">
+        <input type="text" [(ngModel)]="busquedaConcepto" (input)="aplicarFiltros()" placeholder="Buscar por destino o motivo...">
+      </div>
+    </div>
+
+    <div *ngIf="transaccionesFiltradas && transaccionesFiltradas.length > 0; else sinTransacciones" class="tabla-historial-wrapper">
       <table class="tabla-ingresos">
         <thead>
           <tr>
-            <th>Tipo</th>
-            <th>Concepto / Categoría</th>
+            <th>Origen</th>
+            <th>Destino</th>
+            <th>Motivo / Descripción</th>
             <th>Fecha</th>
             <th>Monto</th>
+            <th>Acción</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let item of transaccionesFiltradas">
+          <tr *ngFor="let t of transaccionesFiltradas">
+            <td>{{ t.origen }}</td>
+            <td><strong>{{ t.destino }}</strong></td>
+            <td>{{ t.descripcion }}</td>
+            <td>{{ t.fecha }}</td>
+            <td style="color: #d9534f; font-weight: 600;">- Q {{ t.monto | number:'1.2-2' }}</td>
             <td>
-              <span class="badge-tipo" [ngClass]="item.tipo === 'Ingreso' ? 'badge-ingreso' : 'badge-gasto'">
-                {{ item.tipo }}
-              </span>
-            </td>
-            <td>{{ item.conceptoFinal }}</td>
-            <td>{{ item.fecha || 'N/A' }}</td>
-            <td [ngClass]="item.claseCss">
-              {{ item.tipo === 'Ingreso' ? '+' : '-' }} Q {{ item.montoNum | number:'1.2-2' }}
+              <button class="btn-tabla-eliminar" (click)="eliminarTransferencia(t.id)">Eliminar</button>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <ng-template #sinRegistros>
-      <div class="no-hay-registros">
-        <p>No hay transacciones registradas con estos filtros</p>
+    <ng-template #sinTransacciones>
+      <div class="no-hay-registros" style="text-align: center; padding: 20px; color: #777;">
+        <p>No hay transferencias registradas</p>
       </div>
     </ng-template>
   </div>
+</div>
 
-  <!-- Tarjeta de Balance General (Ingresos vs Gastos) -->
-  <div class="tarjeta-total-general">
-    <div class="info-total">
-      <span class="titulo-total">BALANCE NETO ACTUAL (INGRESOS - GASTOS)</span>
-      <h2 class="monto-total" [ngClass]="balanceNeto >= 0 ? 'texto-positivo' : 'texto-negativo'">
-        Q {{ balanceNeto | number:'1.2-2' }}
-      </h2>
-      <span class="sub-total">Ingresos: Q {{ totalIngresosFlujo | number:'1.2-2' }} | Gastos: Q {{ totalGastosFlujo | number:'1.2-2' }}</span>
-    </div>
-    <div class="icono-total-container">
-      <img src="images/billetera.png" alt="Balance" class="imagen-icono-total">
-    </div>
+<!-- Modal de Alertas -->
+<div class="modal-overlay" *ngIf="mostrarModalAlerta">
+  <div class="modal-contenido">
+    <div class="modal-icono-alerta">⚠️</div>
+    <p>{{ mensajeAlerta }}</p>
+    <button class="btn-cerrar-modal" (click)="cerrarModal()">Aceptar</button>
   </div>
-
-  <div class="pie-ayuda">
-    <span>Historial sincronizado en tiempo real</span>
-  </div>
-
 </div>

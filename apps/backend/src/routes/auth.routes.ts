@@ -1,31 +1,29 @@
 import { Router } from 'express';
 import passport from 'passport';
 import jwt from 'jsonwebtoken';
-import { registrarUsuario, loginUsuario } from '../controller/auth.controller';
 
 const router = Router();
+const JWT_SECRET = process.env.JWT_SECRET || 'secreto_super_seguro';
 
-router.post('/register', registrarUsuario);
-router.post('/login', loginUsuario);
+// 1. Ruta que inicia el flujo con Google (¡esta es la que faltaba!)
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-router.get(
-  '/google',
-  passport.authenticate('google', { scope: ['profile', 'email'], session: false, prompt: 'select_account' })
-);
-
-router.get(
-  '/google/callback',
-  passport.authenticate('google', { session: false }),
-  (req: any, res) => {
-    const usuario = req.user;
+// 2. Ruta de callback que recibe la respuesta de Google
+router.get('/google/callback',
+  passport.authenticate('google', { session: false, failureRedirect: 'http://localhost:4200/login' }),
+  (req, res) => {
+    const usuario = req.user as any;
 
     const token = jwt.sign(
       { id: usuario.id, email: usuario.email },
-      process.env.JWT_SECRET || 'tu_secreto_jwt',
-      { expiresIn: '1d' }
+      JWT_SECRET,
+      { expiresIn: '7d' }
     );
 
-    res.redirect(`http://localhost:4200/dashboard?token=${token}`);
+    const nombreCodificado = encodeURIComponent(usuario.nombre || 'Usuario');
+
+    // Redirige al frontend pasándole el token por la URL
+    res.redirect(`http://localhost:4200/auth-callback?token=${token}&nombre=${nombreCodificado}`);
   }
 );
 
