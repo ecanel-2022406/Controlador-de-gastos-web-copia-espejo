@@ -1,0 +1,40 @@
+<div class="login-container">
+    <form class="login-card" (ngSubmit)="enviarFormulario()">
+    <div class="login-header">
+        <div class="logo-wrapper">
+        <img src="images/logo.png" alt="Novatech Logo" class="logo-img" />
+        <h1>NOVATECH</h1>
+        </div>
+        <h2>{{ esRegistro ? 'Crear Cuenta' : 'Iniciar Sesión' }}</h2>
+        <p>{{ esRegistro ? 'Regístrate para comenzar' : 'Ingresa tus credenciales para acceder a tu cuenta.' }}</p>
+    </div>
+
+    <div class="form-group" *ngIf="esRegistro">
+        <label>Nombre</label>
+        <input type="text" [(ngModel)]="usuario.nombre" name="nombre" placeholder="Tu nombre" [required]="esRegistro" />
+    </div>
+
+    <div class="form-group">
+        <label>Correo Electrónico</label>
+        <input type="email" [(ngModel)]="usuario.email" name="email" placeholder="nombre@ejemplo.com" required />
+    </div>
+
+    <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" [(ngModel)]="usuario.password" name="password" placeholder="••••••••" required />
+    </div>
+
+    <button type="submit">{{ esRegistro ? 'Registrarse' : 'Entrar' }}</button>
+    
+    <button type="button" (click)="loginWithGoogle()" class="google-btn">
+        Iniciar sesión con Google
+
+    </button>
+
+
+    <p class="toggle-mode" (click)="esRegistro = !esRegistro">
+        {{ esRegistro ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate' }}
+    </p>
+
+    </form>
+</div>

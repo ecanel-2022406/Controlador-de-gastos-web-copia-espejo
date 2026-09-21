@@ -1,0 +1,227 @@
+<div class="contenedor-principal" [class.sidebar-colapsado]="!sidebarAbierto">
+
+  <aside class="barra-lateral" *ngIf="sidebarAbierto">
+    <div class="menu-lateral">
+      <button class="opcion-menu" [class.activo]="menuActivo === 'inicio'" (click)="seleccionarMenu('inicio')">
+        <img src="images/inicio.png" alt="Icono Inicio" class="icono-menu-img"> Inicio
+      </button>
+
+      <button class="opcion-menu" [class.activo]="menuActivo === 'ingresos'" (click)="seleccionarMenu('ingresos')">
+        <img src="images/ingresos.png" alt="Icono Ingresos" class="icono-menu-img"> Ingresos
+      </button>
+
+      <button class="opcion-menu" [class.activo]="menuActivo === 'gastos'" (click)="seleccionarMenu('gastos')">
+        <img src="images/gastos.png" alt="Icono Gastos" class="icono-menu-img"> Gastos
+      </button>
+
+      <button class="opcion-menu" [class.activo]="menuActivo === 'transacciones'" (click)="seleccionarMenu('transacciones')">
+        <img src="images/transacciones.png" alt="Icono Transacciones" class="icono-menu-img"> Transacciones
+      </button>
+
+      <button class="opcion-menu" [class.activo]="menuActivo === 'historial'" (click)="seleccionarMenu('historial')">
+        <img src="images/historial.png" alt="Icono Historial" class="icono-menu-img"> Historial
+      </button>
+    </div>
+
+    <div class="pie-lateral">
+      <button class="boton-salir" (click)="cerrarSesion()">
+        <span class="icono-css icono-salir-css"></span> Cerrar sesión
+      </button>
+
+      <div class="logo-hexagono-container">
+        <img src="images/logo.png" alt="Logo Kinal" class="imagen-logo-kinal">
+      </div>
+    </div>
+  </aside>
+
+  <main class="contenido-principal">
+
+    <header class="barra-superior">
+      <div class="grupo-titulo">
+        <button class="boton-menu" (click)="toggleSidebar()">
+          <img src="images/menu.png" alt="Icono Menu" class="icono-menu-img">
+          <span class="icono-hamburguesa"></span>
+        </button>
+        <div>
+          <h1>Dashboard Financiero</h1>
+          <p>Resumen general de tu actividad financiera</p>
+        </div>
+      </div>
+      
+      <div class="acciones-superiores">
+        <!-- Fecha original -->
+        <div class="etiqueta-fecha">
+          <img src="images/fecha.png" alt="Calendario" class="imagen-icono-extra"> 
+          <span>{{ fechaActual | date:'dd \'de\' MMMM, yyyy' }}</span>
+        </div>
+        
+        <!-- Campana y panel de recomendaciones flotante -->
+        <div class="contenedor-notificacion-flotante">
+          <button class="boton-icono" (click)="toggleNotificaciones()">
+            <img src="images/notificacion.png" alt="Notificación" class="imagen-icono-extra">
+            <span class="punto-notificacion" *ngIf="listaNotificaciones.length > 0"></span>
+          </button>
+
+          <div class="dropdown-recomendaciones" *ngIf="notificacionesAbiertas">
+            <div class="dropdown-header">
+              <h3>Centro de Recomendaciones</h3>
+            </div>
+            <div class="dropdown-body">
+              <div *ngIf="listaNotificaciones.length === 0" class="sin-notis">
+                No hay notificaciones nuevas.
+              </div>
+              <div class="item-notificacion" *ngFor="let alerta of listaNotificaciones">
+                <img src="images/notificacion.png" alt="Info" style="width: 14px; height: 14px; margin-top: 2px; opacity: 0.7;">
+                <p>{{ alerta }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="perfil-usuario">
+          <div class="avatar-usuario">
+            <img src="images/usuario.png" alt="Perfil" class="imagen-icono-extra">
+          </div>
+          <span class="nombre-usuario">{{ nombreUsuario || 'Usuario' }}</span>
+          <span class="flecha-dropdown">▾</span>
+        </div>
+      </div>
+    </header>
+
+    <div *ngIf="menuActivo === 'inicio'">
+      <section class="cuadricula-estadisticas">
+        
+        <div class="tarjeta-stat">
+          <div class="indicador-tarjeta barra-azul"></div>
+          <div class="contenido-stat">
+            <div class="titulo-icono-stat">
+              <div class="circulo-icono azul-suave">
+                <img src="images/ingreso.png" alt="Icono Ingreso" class="icono-menu-img">
+              </div>
+              <span>Ingreso Fijo (Neto)</span>
+            </div>
+            <h2>{{ ingresoFijoNeto ? ('Q ' + (ingresoFijoNeto | number:'1.2-2')) : 'Sin registros' }}</h2>
+            <p class="tendencia-positiva" *ngIf="ingresoFijoNeto"><span class="flecha-tendencia"></span> Con Leyes GT</p>
+          </div>
+        </div>
+
+        <div class="tarjeta-stat">
+          <div class="indicador-tarjeta barra-cian"></div>
+          <div class="contenido-stat">
+            <div class="titulo-icono-stat">
+              <div class="circulo-icono cian-suave">
+                <img src="images/extra.png" alt="Saldo" class="icono-menu-img">
+              </div>
+              <span>Saldo Disponible</span>
+            </div>
+            
+            <h2 style="color: #000;">
+              {{ ingresoNetoReal > 0 ? ('Q ' + (saldoDisponible | number:'1.2-2')) : 'Sin registros' }}
+            </h2>
+
+            <p class="tendencia-positiva"><span class="flecha-tendencia"></span> Restante</p>
+          </div>
+        </div>
+
+        <div class="tarjeta-stat">
+          <div class="indicador-tarjeta barra-roja"></div>
+          <div class="contenido-stat">
+            <div class="titulo-icono-stat">
+              <div class="circulo-icono rojo-suave">
+                <img src="images/gasto.png" alt="Icono Historial" class="icono-menu-img">
+              </div>
+              <span>Gastos</span>
+            </div>
+            <h2>{{ gastosTotales !== null && gastosTotales !== undefined && gastosTotales !== 0 ? ('Q ' + (gastosTotales | number:'1.2-2')) : 'Sin registros' }}</h2>
+            <p class="tendencia-positiva alerta" *ngIf="gastosTotales"><span class="flecha-tendencia alerta"></span> Registrado</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="seccion-inferior-grid">
+        <div class="tarjeta-panel presupuesto-panel">
+          <div class="panel-header">
+            <h3>Resumen de Gastos</h3>
+            <button class="boton-opciones"><span class="puntos-menu"></span></button>
+          </div>
+          
+          <ng-container *ngIf="listaGastos && listaGastos.length > 0; else sinGastos">
+            <div class="tabla-encabezado">
+              <span>Categoría</span>
+              <span>Monto</span>
+            </div>
+            <div class="lista-items">
+              <div class="fila-item" *ngFor="let item of listaGastos">
+                <div class="item-info"><span class="punto-color rojo"></span> {{ item.categoria || item.nombre }}</div>
+                <span class="item-monto">Q {{ item.monto | number:'1.2-2' }}</span>
+              </div>
+            </div>
+            <div class="panel-footer">
+              <span>Total Gastos</span>
+              <strong>Q {{ totalGastos | number:'1.2-2' }}</strong>
+            </div>
+          </ng-container>
+
+          <ng-template #sinGastos>
+            <div class="estado-vacio">
+              <div class="icono-vacio-css"></div>
+              <p>No hay gastos registrados</p>
+            </div>
+          </ng-template>
+        </div>
+
+        <!-- Sección de Próximos Pagos y Facturas alimentada por las transferencias -->
+        <div class="tarjeta-panel pagos-panel">
+          <div class="panel-header">
+            <h3>Próximos Pagos y Facturas</h3>
+            <button class="boton-opciones"><span class="puntos-menu"></span></button>
+          </div>
+
+          <ng-container *ngIf="listaPagos && listaPagos.length > 0; else sinPagos">
+            <div class="lista-items">
+              <div class="fila-pago" *ngFor="let pago of listaPagos">
+                <div class="pago-detalle-izq">
+                  <div class="circulo-icono azul-suave">
+                    <img [src]="obtenerIconoMotivo(pago.motivo)" alt="Icono Motivo" class="imagen-icono-extra" style="width: 20px; height: 20px;">
+                  </div>
+                  <div>
+                    <strong>{{ pago.titulo }}</strong>
+                    <small>{{ pago.fecha | date:'dd MMM, yyyy' }} - <em>{{ pago.motivo }}</em></small>
+                  </div>
+                </div>
+                <span class="item-monto" style="color: #333;">Q {{ pago.monto | number:'1.2-2' }}</span>
+              </div>
+            </div>
+            <div class="panel-footer simple">
+              <span>Mostrando transferencias registradas</span>
+            </div>
+          </ng-container>
+
+          <ng-template #sinPagos>
+            <div class="estado-vacio">
+              <div class="icono-vacio-css"></div>
+              <p>No hay pagos próximos</p>
+            </div>
+          </ng-template>
+        </div>
+      </section>
+    </div>
+
+    <div *ngIf="menuActivo === 'ingresos'">
+      <app-ingresos></app-ingresos>
+    </div>
+
+    <div *ngIf="menuActivo === 'gastos'">
+      <app-gastos></app-gastos>
+    </div>
+
+    <div *ngIf="menuActivo === 'transacciones'">
+      <app-transacciones></app-transacciones>
+    </div>
+
+    <div *ngIf="menuActivo === 'historial'">
+      <app-historial></app-historial>
+    </div>
+
+  </main>
+</div>

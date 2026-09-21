@@ -1,0 +1,243 @@
+.seccion-ingresos-contenedor {
+  padding: 10px 20px;
+  max-width: 100%;
+}
+
+.tarjeta-formulario-superior {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+
+.tarjeta-formulario-superior h3 {
+  margin-bottom: 15px;
+  font-size: 16px;
+  color: #1e293b;
+}
+
+.form-linea {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.grupo-input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.grupo-input input {
+  width: 90%;
+  padding: 9px 11px;
+  border: 1px solid #7bb6ff;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.btn-accion-principal {
+  background-color: #1e3a8a;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-accion-principal:hover {
+  background-color: #1e40af;
+}
+
+.estado-inferior-tarjeta {
+  display: flex;
+  align-items: center;
+  margin-top: 15px;
+  font-size: 13px;
+  color: #64748b;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 10px;
+}
+
+.punto-estado {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #22c55e;
+  margin-right: 8px;
+}
+
+.monto-parcial {
+  margin-left: auto;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.tarjeta-historial {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+
+.tarjeta-historial h3 {
+  font-size: 15px;
+  color: #1e293b;
+  margin-bottom: 15px;
+}
+
+.tabla-ingresos {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabla-ingresos th, .tabla-ingresos td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 14px;
+}
+
+.tabla-ingresos th {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.texto-monto {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.no-hay-registros {
+  text-align: center;
+  padding: 30px;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.tarjeta-total-general {
+  background: #ffffff;
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-left: 4px solid #1e3a8a;
+}
+
+.titulo-total {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.5px;
+}
+
+.monto-total {
+  font-size: 28px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 5px 0;
+}
+
+.sub-total {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.imagen-icono-total {
+  width: 40px;
+  height: 40px;
+  opacity: 0.8;
+}
+
+.pie-ayuda {
+  text-align: center;
+  margin-top: 15px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.btn-tabla-eliminar {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btn-tabla-eliminar:hover {
+  background-color: #fecaca;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.modal-contenido {
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.modal-icono-alerta {
+  font-size: 35px;
+  margin-bottom: 10px;
+}
+
+.modal-contenido h3 {
+  margin-bottom: 10px;
+  color: #333;
+  font-size: 20px;
+}
+
+.modal-contenido p {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 20px;
+  line-height: 1.4;
+}
+
+.btn-cerrar-modal {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-cerrar-modal:hover {
+  background-color: #0056b3;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

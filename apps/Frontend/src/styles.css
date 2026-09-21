@@ -1,0 +1,26 @@
+.sidebar-logo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 10px;
+  text-align: center;
+}
+
+.logo-personalizado {
+  width: 120px;
+  height: auto;
+  object-fit: contain;
+  margin-bottom: 10px;
+}
+
+.titulo-logo {
+  font-size: 20px;
+  font-weight: bold;
+  color: #ffffff;
+  margin: 0;
+}
+
+.logo-grande {
+  width: 1200px; /* Cambia este valor a los píxeles que quieras para que crezca */
+  height: auto;
+}
